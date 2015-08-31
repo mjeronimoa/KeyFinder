@@ -16,6 +16,7 @@ class UIData(QObject):
     urlSearch = ""
     pattern = ""
     refreshRate = 100;
+    threads = 1
 
     stopSearch = pyqtSignal()
 
@@ -53,8 +54,6 @@ class SearchThread(QtCore.QThread):
                     self.codeLocalDataBase.add(result)
                     self.c.codeFound.emit(result)
 
-
-
             self.c.increaseAttempt.emit()
             time.sleep(self.uiData.refreshRate)
 
@@ -70,21 +69,27 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         self.setFixedSize(self.size())  # block resizing
 
         self.uiData = UIData()
+        self.searchThread = []
         self.codeDataBase = set()
         self.attempts = 0
         self.lineEditUrlSearch.setText("http://www.wepaste.com/m_jero/")
         self.lineEditRegularExpression.setText("([A-Z|0-9]{4}-[A-Z|0-9]{4}-[A-Z|0-9]{4}-[A-Z|0-9]{4})")
 
+    def readInput(self):
+        self.uiData.urlSearch = self.lineEditUrlSearch.text()
+        self.uiData.pattern = self.lineEditRegularExpression.text()
+        self.uiData.refreshRate = self.spinBoxRefresh.value() / 1000
+        self.uiData.threads = self.spinBoxThreads.value()
+
     def startCliked(self):
         if self.pushButtonStart.text() == "Start":
-            self.uiData.urlSearch = self.lineEditUrlSearch.text()
-            self.uiData.pattern = self.lineEditRegularExpression.text()
-            self.uiData.refreshRate = self.spinBoxRefresh.value() / 1000
+            self.readInput()
+            for threadNumber in range(0, self.uiData.threads):
+                self.searchThread.append(SearchThread(self.uiData))
+                self.searchThread[threadNumber].c.increaseAttempt.connect(self.updateAttempts)
+                self.searchThread[threadNumber].c.codeFound.connect(self.receiveCode)
+                self.searchThread[threadNumber].start()
 
-            self.searchThread = SearchThread(self.uiData)
-            self.searchThread.c.increaseAttempt.connect(self.updateAttempts)
-            self.searchThread.c.codeFound.connect(self.receiveCode)
-            self.searchThread.start()
             self.pushButtonStart.setText("Stop")
         else:
             self.uiData.stopSearch.emit()
