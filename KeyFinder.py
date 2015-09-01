@@ -10,6 +10,7 @@ import time
 import datetime
 import urllib.request
 import re
+import xml.etree.ElementTree as ET
 
 
 class UIData(QObject):
@@ -66,14 +67,26 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         QtWidgets.QMainWindow.__init__(self, parent)
         self.setupUi(self)
         self.pushButtonStart.clicked.connect(self.startCliked)  # Bind the event handlers
+        self.comboProfiles.currentIndexChanged[str].connect(self.loadProfile)
         self.setFixedSize(self.size())  # block resizing
 
-        self.uiData = UIData()
+        tree = ET.parse('profiles.xml')
+        root = tree.getroot()
+
+        self.uiData = UIData();
         self.searchThread = []
         self.codeDataBase = set()
         self.attempts = 0
-        self.lineEditUrlSearch.setText("http://www.wepaste.com/m_jero/")
-        self.lineEditRegularExpression.setText("([A-Z|0-9]{4}-[A-Z|0-9]{4}-[A-Z|0-9]{4}-[A-Z|0-9]{4})")
+        self.comboProfiles.addItem("")
+
+        self.profiles = {'':UIData()}
+
+        for profile in root.findall('profile'):
+            profileData = UIData()
+            self.comboProfiles.addItem(profile.get('name'))
+            profileData.urlSearch = profile.find('urlSearch').text
+            profileData.pattern = profile.find('pattern').text
+            self.profiles[profile.get('name')] = profileData
 
     def readInput(self):
         self.uiData.urlSearch = self.lineEditUrlSearch.text()
@@ -81,10 +94,17 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         self.uiData.refreshRate = self.spinBoxRefresh.value() / 1000
         self.uiData.threads = self.spinBoxThreads.value()
 
+    def loadProfile(self, string):
+        if string:
+            self.lineEditUrlSearch.setText(self.profiles[string].urlSearch)
+            self.lineEditRegularExpression.setText(self.profiles[string].pattern)
+
+
     def startCliked(self):
         if self.pushButtonStart.text() == "Start":
             self.readInput()
             for threadNumber in range(0, self.uiData.threads):
+                del self.searchThread[:]
                 self.searchThread.append(SearchThread(self.uiData))
                 self.searchThread[threadNumber].c.increaseAttempt.connect(self.updateAttempts)
                 self.searchThread[threadNumber].c.codeFound.connect(self.receiveCode)

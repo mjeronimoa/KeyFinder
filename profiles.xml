@@ -1,0 +1,14 @@
+<data>
+	<profile name="Oneplus Two">
+		<urlSearch>http://www.wepaste.com/m_jero/</urlSearch>
+		<pattern>([A-Z|0-9]{4}-[A-Z|0-9]{4}-[A-Z|0-9]{4}-[A-Z|0-9]{4})</pattern>
+		<refreshRate>110</refreshRate>
+		<threads>2</threads>
+	</profile>
+	<profile name="Test">
+		<urlSearch>http://www.google.com</urlSearch>
+		<pattern></pattern>
+		<refreshRate>1000</refreshRate>
+		<threads>2</threads>
+	</profile>
+</data>
