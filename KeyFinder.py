@@ -11,12 +11,14 @@ import datetime
 import urllib.request
 import re
 import xml.etree.ElementTree as ET
+from selenium import webdriver
 
 
 class UIData(QObject):
     urlSearch = ""
     pattern = ""
-    refreshRate = 100;
+    urlOutput = ""
+    refreshRate = 100
     threads = 1
 
     stopSearch = pyqtSignal()
@@ -82,9 +84,14 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
 
         for profile in root.findall('profile'):
             profileData = UIData()
+
             self.comboProfiles.addItem(profile.get('name'))
             profileData.urlSearch = profile.find('urlSearch').text
             profileData.pattern = profile.find('pattern').text
+            profileData.urlOutput = profile.find('urlOutput').text
+            profileData.threads = profile.find('threads').text
+            profileData.refreshRate = profile.find('refreshRate').text
+
             self.profiles[profile.get('name')] = profileData
 
     def validate(self):
@@ -96,11 +103,16 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
             self.statusBar().showMessage("Regular Expression is mandatory")
             return False
 
+        if not self.lineEditUrlOutput.text():
+            self.statusBar().showMessage("Url Output is mandatory")
+            return False
+
         return True
 
     def readInput(self):
         self.uiData.urlSearch = self.lineEditUrlSearch.text()
         self.uiData.pattern = self.lineEditRegularExpression.text()
+        self.uiData.urlOutput = self.lineEditUrlOutput.text()
         self.uiData.refreshRate = self.spinBoxRefresh.value() / 1000
         self.uiData.threads = self.spinBoxThreads.value()
 
@@ -108,11 +120,15 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         if self.profiles[string]:
             self.lineEditUrlSearch.setText(self.profiles[string].urlSearch)
             self.lineEditRegularExpression.setText(self.profiles[string].pattern)
+            self.lineEditUrlOutput.setText(self.profiles[string].urlOutput)
+            self.spinBoxRefresh.setValue(int(self.profiles[string].refreshRate))
+            self.spinBoxThreads.setValue(int(self.profiles[string].threads))
 
     def startCliked(self):
         if self.pushButtonStart.text() == "Start":
             if self.validate():
                 self.readInput()
+                self.openExplorer()
                 del self.searchThread[:]
                 for threadNumber in range(0, self.uiData.threads):
                     self.searchThread.append(SearchThread(self.uiData))
@@ -142,6 +158,13 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         self.listLog.addItem(item)
         return
 
+    def openExplorer(self):
+        path_to_chromedriver = './chromedriver' # change path as needed
+        browser = webdriver.Chrome(executable_path = path_to_chromedriver)
+        browser.get(self.uiData.urlOutput)
+
+
+#Main Program
 
 app = QtWidgets.QApplication(sys.argv)
 myWindow = MyWindowClass(None)
