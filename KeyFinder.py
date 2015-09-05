@@ -113,8 +113,8 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         if self.pushButtonStart.text() == "Start":
             if self.validate():
                 self.readInput()
+                del self.searchThread[:]
                 for threadNumber in range(0, self.uiData.threads):
-                    del self.searchThread[:]
                     self.searchThread.append(SearchThread(self.uiData))
                     self.searchThread[threadNumber].c.increaseAttempt.connect(self.updateAttempts)
                     self.searchThread[threadNumber].c.codeFound.connect(self.receiveCode)
