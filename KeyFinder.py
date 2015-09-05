@@ -73,13 +73,12 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         tree = ET.parse('profiles.xml')
         root = tree.getroot()
 
-        self.uiData = UIData();
+        self.uiData = UIData()
         self.searchThread = []
         self.codeDataBase = set()
         self.attempts = 0
+        self.profiles = {'': UIData()}
         self.comboProfiles.addItem("")
-
-        self.profiles = {'':UIData()}
 
         for profile in root.findall('profile'):
             profileData = UIData()
@@ -88,6 +87,17 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
             profileData.pattern = profile.find('pattern').text
             self.profiles[profile.get('name')] = profileData
 
+    def validate(self):
+        if not self.lineEditUrlSearch.text():
+            self.statusBar().showMessage("URL Search is mandatory")
+            return False
+
+        if not self.lineEditRegularExpression.text():
+            self.statusBar().showMessage("Regular Expression is mandatory")
+            return False
+
+        return True
+
     def readInput(self):
         self.uiData.urlSearch = self.lineEditUrlSearch.text()
         self.uiData.pattern = self.lineEditRegularExpression.text()
@@ -95,22 +105,22 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         self.uiData.threads = self.spinBoxThreads.value()
 
     def loadProfile(self, string):
-        if string:
+        if self.profiles[string]:
             self.lineEditUrlSearch.setText(self.profiles[string].urlSearch)
             self.lineEditRegularExpression.setText(self.profiles[string].pattern)
 
-
     def startCliked(self):
         if self.pushButtonStart.text() == "Start":
-            self.readInput()
-            for threadNumber in range(0, self.uiData.threads):
-                del self.searchThread[:]
-                self.searchThread.append(SearchThread(self.uiData))
-                self.searchThread[threadNumber].c.increaseAttempt.connect(self.updateAttempts)
-                self.searchThread[threadNumber].c.codeFound.connect(self.receiveCode)
-                self.searchThread[threadNumber].start()
+            if self.validate():
+                self.readInput()
+                for threadNumber in range(0, self.uiData.threads):
+                    del self.searchThread[:]
+                    self.searchThread.append(SearchThread(self.uiData))
+                    self.searchThread[threadNumber].c.increaseAttempt.connect(self.updateAttempts)
+                    self.searchThread[threadNumber].c.codeFound.connect(self.receiveCode)
+                    self.searchThread[threadNumber].start()
 
-            self.pushButtonStart.setText("Stop")
+                self.pushButtonStart.setText("Stop")
         else:
             self.uiData.stopSearch.emit()
             self.pushButtonStart.setText("Start")
