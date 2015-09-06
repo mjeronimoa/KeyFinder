@@ -3,6 +3,8 @@
 		<urlSearch>http://www.wepaste.com/m_jero/</urlSearch>
 		<pattern>([A-Z|0-9]{4}-[A-Z|0-9]{4}-[A-Z|0-9]{4}-[A-Z|0-9]{4})</pattern>
 		<urlOutput>https://invites.oneplus.net/claim</urlOutput>
+		<outputRemove>-</outputRemove>
+		<outputField>invite_section_one</outputField>
 		<refreshRate>110</refreshRate>
 		<threads>2</threads>
 	</profile>
@@ -10,6 +12,8 @@
 		<urlSearch>http://www.google.com</urlSearch>
 		<pattern></pattern>
 		<urlOutput>http://www.google.com</urlOutput>
+		<outputRemove>-</outputRemove>
+		<outputField></outputField>
 		<refreshRate>1000</refreshRate>
 		<threads>2</threads>
 	</profile>

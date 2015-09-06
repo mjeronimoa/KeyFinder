@@ -12,12 +12,15 @@ import urllib.request
 import re
 import xml.etree.ElementTree as ET
 from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 
 
 class UIData(QObject):
     urlSearch = ""
     pattern = ""
     urlOutput = ""
+    outputRemove = ""
+    outputField = ""
     refreshRate = 100
     threads = 1
 
@@ -91,6 +94,8 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
             profileData.urlOutput = profile.find('urlOutput').text
             profileData.threads = profile.find('threads').text
             profileData.refreshRate = profile.find('refreshRate').text
+            profileData.outputRemove = profile.find('outputRemove').text
+            profileData.outputField = profile.find('outputField').text
 
             self.profiles[profile.get('name')] = profileData
 
@@ -107,12 +112,18 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
             self.statusBar().showMessage("Url Output is mandatory")
             return False
 
+        if not self.lineEditOutpuField.text():
+            self.statusBar().showMessage("Output field is mandatory")
+            return False
+
         return True
 
     def readInput(self):
         self.uiData.urlSearch = self.lineEditUrlSearch.text()
         self.uiData.pattern = self.lineEditRegularExpression.text()
         self.uiData.urlOutput = self.lineEditUrlOutput.text()
+        self.uiData.outputRemove = self.lineEditOutputRemove.text()
+        self.uiData.outputField = self.lineEditOutpuField.text()
         self.uiData.refreshRate = self.spinBoxRefresh.value() / 1000
         self.uiData.threads = self.spinBoxThreads.value()
 
@@ -121,6 +132,8 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
             self.lineEditUrlSearch.setText(self.profiles[string].urlSearch)
             self.lineEditRegularExpression.setText(self.profiles[string].pattern)
             self.lineEditUrlOutput.setText(self.profiles[string].urlOutput)
+            self.lineEditOutputRemove.setText(self.profiles[string].outputRemove)
+            self.lineEditOutpuField.setText(self.profiles[string].outputField)
             self.spinBoxRefresh.setValue(int(self.profiles[string].refreshRate))
             self.spinBoxThreads.setValue(int(self.profiles[string].threads))
 
@@ -149,6 +162,15 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         if code not in self.codeDataBase:
             self.codeDataBase.add(code)
             self.writeTrace("Code: " + code + " found")
+            self.validateCode(code)
+
+    def validateCode(self, code):
+        if self.uiData.outputRemove:
+            code = code.replace(self.uiData.outputRemove, '')
+
+        self.browser.find_element_by_id(self.uiData.outputField).send_keys(code)
+        self.browser.find_element_by_id(self.uiData.outputField).send_keys(Keys.RETURN)
+        self.writeTrace("Code: " + code + " introduced in output web")
 
     def writeTrace(self, text):
         ts = time.time()
@@ -160,8 +182,8 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
 
     def openExplorer(self):
         path_to_chromedriver = './chromedriver' # change path as needed
-        browser = webdriver.Chrome(executable_path = path_to_chromedriver)
-        browser.get(self.uiData.urlOutput)
+        self.browser = webdriver.Chrome(executable_path = path_to_chromedriver)
+        self.browser.get(self.uiData.urlOutput)
 
 
 #Main Program
