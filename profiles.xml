@@ -5,6 +5,7 @@
 		<urlOutput>https://invites.oneplus.net/claim</urlOutput>
 		<outputRemove>-</outputRemove>
 		<outputField>invite_section_one</outputField>
+		<failWord>invalid</failWord>
 		<refreshRate>110</refreshRate>
 		<threads>2</threads>
 	</profile>
@@ -14,6 +15,7 @@
 		<urlOutput>http://www.google.com</urlOutput>
 		<outputRemove>-</outputRemove>
 		<outputField></outputField>
+		<failWord></failWord>
 		<refreshRate>1000</refreshRate>
 		<threads>2</threads>
 	</profile>

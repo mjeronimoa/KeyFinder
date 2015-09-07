@@ -12,7 +12,9 @@ import urllib.request
 import re
 import xml.etree.ElementTree as ET
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions
 
 
 class UIData(QObject):
@@ -21,6 +23,7 @@ class UIData(QObject):
     urlOutput = ""
     outputRemove = ""
     outputField = ""
+    failWord = ""
     refreshRate = 100
     threads = 1
 
@@ -96,6 +99,7 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
             profileData.refreshRate = profile.find('refreshRate').text
             profileData.outputRemove = profile.find('outputRemove').text
             profileData.outputField = profile.find('outputField').text
+            profileData.failWord = profile.find('failWord').text
 
             self.profiles[profile.get('name')] = profileData
 
@@ -124,6 +128,7 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         self.uiData.urlOutput = self.lineEditUrlOutput.text()
         self.uiData.outputRemove = self.lineEditOutputRemove.text()
         self.uiData.outputField = self.lineEditOutpuField.text()
+        self.uiData.failWord = self.lineEditFailWord.text()
         self.uiData.refreshRate = self.spinBoxRefresh.value() / 1000
         self.uiData.threads = self.spinBoxThreads.value()
 
@@ -134,6 +139,7 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
             self.lineEditUrlOutput.setText(self.profiles[string].urlOutput)
             self.lineEditOutputRemove.setText(self.profiles[string].outputRemove)
             self.lineEditOutpuField.setText(self.profiles[string].outputField)
+            self.lineEditFailWord.setText(self.profiles[string].failWord)
             self.spinBoxRefresh.setValue(int(self.profiles[string].refreshRate))
             self.spinBoxThreads.setValue(int(self.profiles[string].threads))
 
@@ -171,6 +177,15 @@ class MyWindowClass(QtWidgets.QMainWindow, form_class):
         self.browser.find_element_by_id(self.uiData.outputField).send_keys(code)
         self.browser.find_element_by_id(self.uiData.outputField).send_keys(Keys.RETURN)
         self.writeTrace("Code: " + code + " introduced in output web")
+        if self.uiData.failWord:
+            old_page = self.browser.find_element_by_tag_name('html')
+            WebDriverWait(self.browser, 3).until(expected_conditions.staleness_of(old_page))
+            src = self.browser.page_source
+            text_found = re.search(self.uiData.failWord, src)
+            if text_found:
+                self.writeTrace("Code: " + code + " FAILED")
+            else:
+                self.writeTrace("Code: " + code + " ACCEPTED")
 
     def writeTrace(self, text):
         ts = time.time()
